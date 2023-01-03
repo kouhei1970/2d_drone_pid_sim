@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include "pid.hpp"
 
 PID::PID()
@@ -42,8 +41,8 @@ void PID::i_reset(void)
 }
 void PID::printGain(void)
 {
-  Serial.printf("#Kp:%8.4f Ti:%8.4f Td:%8.4f Eta:%8.4f h:%8.4f\r\n", 
-   m_kp, m_ti, m_td, m_eta, m_h);
+  //Serial.printf("#Kp:%8.4f Ti:%8.4f Td:%8.4f Eta:%8.4f h:%8.4f\r\n", 
+  // m_kp, m_ti, m_td, m_eta, m_h);
 }
 
 void PID::set_error(float err)
