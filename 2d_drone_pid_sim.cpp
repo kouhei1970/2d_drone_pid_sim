@@ -147,8 +147,8 @@ void print_state(double t, motor_t* front_motor, motor_t* rear_motor, drone_t* d
     t, 
     front_motor->omega*60/2/M_PI,
     rear_motor->omega*60/2/M_PI,
-    drone->q*180/M_PI,
-    drone->theta*180/M_PI
+    drone->q,
+    drone->theta
   );
 }
 
@@ -165,7 +165,7 @@ void drone_sim(void)
   double step    =   0.0001;//step size
   double ctrl_step = 0.0025;
   double ctrl_time=0.0;
-  double theta_ref = 1.0*M_PI/180;
+  double theta_ref = 1.0;
 
   double u0;
   double omega0;
