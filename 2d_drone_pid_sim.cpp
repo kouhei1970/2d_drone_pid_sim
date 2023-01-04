@@ -28,6 +28,7 @@ const double Cq = 4.49713785e-10;//Cofficient of torque (Propeller)
 const double Dm = 1.02432352e-07;   //Cofficient of viscous damping [Nm s]
 const double Iy = 2.19e-5;
 const double armr=0.033;
+const double tau = 1/(92*2*M_PI);
 const double End_time =10.0;//Time [s]
 
 long cpu_time;
@@ -49,6 +50,16 @@ typedef struct
   double q_;
   double theta_;
 } drone_t;
+
+//ローパスフィルタ構造体
+typedef struct 
+{
+  double y;
+  double u;
+  double y_;
+  double u_;
+} lowpass_t;
+
 
 //Motor Equation of motion
 //TL = Cq omega^2
@@ -99,6 +110,17 @@ double thetadot(double theta, double t, double *value)
   return q;
 }
 
+//Lowpassfilter
+//tau dy/dt + y = u
+// value[0]:u
+// value[1]:tau
+double lowpassdot(double y, double t, double* value)
+{
+  double u   = value[0];
+  double tau = value[1];
+  
+  return (-y + u)/tau;
+}
 
 
 //Runge Kutta method
@@ -131,7 +153,7 @@ double rk4(double (*dxdt)(double, double, double*), double x, double t, double h
   return x+(k1 + k2*2.0 + k3*2.0 + k4)/6;
 }
 
-void save_state(double t, motor_t* front_motor, motor_t* rear_motor, drone_t* drone)
+void save_state(double t, motor_t* front_motor, motor_t* rear_motor, drone_t* drone, lowpass_t* lowpass)
 {
   front_motor->omega_ = front_motor->omega;
   front_motor->u_ = front_motor->u;
@@ -139,6 +161,8 @@ void save_state(double t, motor_t* front_motor, motor_t* rear_motor, drone_t* dr
   rear_motor->u_ = rear_motor->u;
   drone->q_ = drone->q;
   drone->theta_ = drone->theta;
+  lowpass->y_=lowpass->y;
+  lowpass->u_=lowpass->u;
 }
 
 void print_state(double t, motor_t* front_motor, motor_t* rear_motor, drone_t* drone)
@@ -159,6 +183,7 @@ void drone_sim(void)
 {
   motor_t motor[2];
   drone_t drone;
+  lowpass_t sensor;
   PID q_pid,theta_pid;
 
   double t       = 0.0; //time
@@ -166,7 +191,7 @@ void drone_sim(void)
   double ctrl_step = 0.0025;
   double ctrl_time=0.0;
   double theta_ref = 1.0;
-
+  
   double u0;
   double omega0;
   double elevator;
@@ -196,6 +221,8 @@ void drone_sim(void)
   motor[REAR].u = u0;
   drone.q=0.0;
   drone.theta = 0.0*M_PI/180.0;
+  sensor.y = 0.0;
+  sensor.u = 0.0;
   #else
   u0 = 0.0;
   motor[FRONT].omega = 0.0;
@@ -204,6 +231,8 @@ void drone_sim(void)
   motor[REAR].u = 0;
   drone.q=0.0;
   drone.theta = 0.0;
+  sensor.y = 0.0;
+  sensor.u = 0.0;
   #endif
 
   //initial state output
@@ -218,7 +247,7 @@ void drone_sim(void)
     {
       err_theta = theta_ref - drone.theta;
       q_ref = theta_pid.update(err_theta);
-      err_q = q_ref - drone.q;
+      err_q = q_ref - sensor.y;
       elevator = q_pid.update(err_q);
       motor[FRONT].u =  0.25*elevator + u0;
       motor[REAR].u  = -0.25*elevator + u0;
@@ -226,7 +255,7 @@ void drone_sim(void)
     }
 
     //Save state
-    save_state(t, &motor[FRONT], &motor[REAR], &drone);
+    save_state(t, &motor[FRONT], &motor[REAR], &drone, &sensor);
 
     //Update(Runge-Kutta method)
     #ifndef LINER
@@ -238,6 +267,7 @@ void drone_sim(void)
     motor[FRONT].omega = rk4(omega_dot_l, motor[FRONT].omega_, t, step, 2, motor[FRONT].u_, omega0);
     motor[REAR].omega  = rk4(omega_dot_l, motor[REAR].omega_,  t, step, 2, motor[REAR].u_ , omega0);
     drone.q = rk4(qdot_l, drone.q_, t, step, 3, motor[FRONT].omega_, motor[REAR].omega_, omega0);
+    sensor.y = rk4(lowpassdot, sensor.y_, t, step, 2, drone.q_, tau);
     drone.theta = rk4(thetadot, drone.theta_, t, step, 1, drone.q_); 
     #endif
 
