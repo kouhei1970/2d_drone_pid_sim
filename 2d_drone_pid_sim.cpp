@@ -207,7 +207,7 @@ void drone_sim(void)
   double ti2=0.016;
   double td2=0.0055;
   double eta2=0.126;
-  double tau = 1/(92*2*M_PI);
+  double tau = 1/(50*2*M_PI);
   
   q_pid.set_parameter(kp1, ti1, td1, eta1, ctrl_step);
   theta_pid.set_parameter(kp2, ti2, td2, eta2, ctrl_step);
