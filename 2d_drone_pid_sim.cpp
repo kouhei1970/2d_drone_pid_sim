@@ -12,7 +12,7 @@
 #include <time.h>
 #include "pid.hpp"
 
-#define LINER
+//#define LINER
 #define FRONT 0
 #define REAR 1
 
@@ -263,6 +263,7 @@ void drone_sim(void)
     motor[FRONT].omega = rk4(omega_dot, motor[FRONT].omega_, t, step, 1, motor[FRONT].u_);
     motor[REAR].omega  = rk4(omega_dot, motor[REAR].omega_,  t, step, 1, motor[REAR].u_ );
     drone.q = rk4(qdot, drone.q_, t, step, 2, motor[FRONT].omega_, motor[REAR].omega_);
+    sensor.y = rk4(lowpassdot, sensor.y_, t, step, 2, drone.q_, tau);
     drone.theta = rk4(thetadot, drone.theta_, t, step, 1, drone.q_); 
     #else
     motor[FRONT].omega = rk4(omega_dot_l, motor[FRONT].omega_, t, step, 2, motor[FRONT].u_, omega0);
