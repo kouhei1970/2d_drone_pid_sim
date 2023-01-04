@@ -166,12 +166,14 @@ void save_state(double t, motor_t* front_motor, motor_t* rear_motor, drone_t* dr
 
 void print_state(double t, motor_t* front_motor, motor_t* rear_motor, drone_t* drone)
 {
-  printf("%11.8f %11.8f %11.8f %11.8f %11.8f\n",
+  printf("%11.8f %11.8f %11.8f %11.8f %11.8f %11.8f\n",
     t, 
     front_motor->omega*60/2/M_PI,
     rear_motor->omega*60/2/M_PI,
     drone->q,
-    drone->theta
+    drone->theta,
+    front_motor->u,
+    rear_motor->u
   );
 }
 
@@ -203,11 +205,11 @@ void drone_sim(void)
   double ti1=2.5;
   double td1=0.03;
   double eta1 =0.125;
-  double kp2=2;
-  double ti2=0.016;
-  double td2=0.0055;
-  double eta2=0.126;
-  double tau = 1/(50*2*M_PI);
+  double kp2=5.0;
+  double ti2=1.0;
+  double td2=0.003;
+  double eta2=0.125;
+  double tau = 1/(92*2*M_PI);
   
   q_pid.set_parameter(kp1, ti1, td1, eta1, ctrl_step);
   theta_pid.set_parameter(kp2, ti2, td2, eta2, ctrl_step);
@@ -251,7 +253,11 @@ void drone_sim(void)
       err_q = q_ref - sensor.y;
       elevator = q_pid.update(err_q);
       motor[FRONT].u =  0.25*elevator + u0;
+      //if (motor[FRONT].u>3.7)motor[FRONT].u = 3.7;
+      //if (motor[FRONT].u<0.0)motor[FRONT].u = 0.0;
       motor[REAR].u  = -0.25*elevator + u0;
+      //if (motor[REAR].u>3.7)motor[REAR].u = 3.7;
+      //if (motor[REAR].u<0.0)motor[REAR].u = 0.0;
       ctrl_time = ctrl_time + ctrl_step;
     }
 
