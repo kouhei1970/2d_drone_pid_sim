@@ -74,6 +74,7 @@ double omega_dot(double omega, double t, double *value)
   return (Km*u/Rm - (Dm + Km*Km/Rm)*omega - TL)/Jm;
 }
 
+//Motor Equation of motion Liner version
 double omega_dot_l(double omega, double t, double *value)
 {
   double u =value[0];
@@ -93,6 +94,7 @@ double qdot(double q, double t, double *value)
   return 2*armr*Ct*(front_omega*front_omega - rear_omega*rear_omega)/Iy;
 }
 
+//Drone equation of motion Liner version
 double qdot_l(double q, double t, double *value)
 {
   double front_omega = value[0];
@@ -102,7 +104,8 @@ double qdot_l(double q, double t, double *value)
   return 2*(2*armr)*Ct*omega0*(front_omega - rear_omega)/Iy;
 }
 
-
+//Drone Kinematics
+//value[0]:q (pitch rate)
 double thetadot(double theta, double t, double *value)
 {
   double q = value[0];
@@ -110,7 +113,7 @@ double thetadot(double theta, double t, double *value)
   return q;
 }
 
-//Lowpassfilter
+//Lowpass filter
 //tau dy/dt + y = u
 // value[0]:u
 // value[1]:tau
@@ -179,7 +182,7 @@ void print_state(double t, motor_t* front_motor, motor_t* rear_motor, drone_t* d
 }
 
 //
-//Motor simulator main
+//2D Quadcopter simulator main
 //
 void drone_sim(void)
 {
