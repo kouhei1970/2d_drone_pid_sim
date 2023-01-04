@@ -11,6 +11,7 @@
 #include <math.h>
 #include <time.h>
 #include "pid.hpp"
+#include "mt19937ar.h"
 
 //#define LINER
 #define FRONT 0
@@ -28,7 +29,7 @@ const double Cq = 4.49713785e-10;//Cofficient of torque (Propeller)
 const double Dm = 1.02432352e-07;   //Cofficient of viscous damping [Nm s]
 const double Iy = 2.19e-5;
 const double armr=0.033;
-const double End_time =10.0;//Time [s]
+const double End_time =20.0;//Time [s]
 
 long cpu_time;
 
@@ -192,6 +193,7 @@ void drone_sim(void)
   double ctrl_step = 0.0025;
   double ctrl_time=0.0;
   double theta_ref = 1.0;
+  double sampling = 0.0;
   
   double u0;
   double omega0;
@@ -205,9 +207,9 @@ void drone_sim(void)
   double ti1=2.5;
   double td1=0.03;
   double eta1 =0.125;
-  double kp2=5.0;
-  double ti2=1.0;
-  double td2=0.003;
+  double kp2=2.0;
+  double ti2=0.016;
+  double td2=0.0055;
   double eta2=0.125;
   double tau = 1/(92*2*M_PI);
   
@@ -248,9 +250,9 @@ void drone_sim(void)
     //Control
     if(t>ctrl_time)
     {
-      err_theta = theta_ref - drone.theta;
+      err_theta = theta_ref*0.0 - drone.theta + (genrand_real1()-0.5);
       q_ref = theta_pid.update(err_theta);
-      err_q = q_ref - sensor.y;
+      err_q = q_ref - sensor.y+(genrand_real1()-0.5);
       elevator = q_pid.update(err_q);
       motor[FRONT].u =  0.25*elevator + u0;
       //if (motor[FRONT].u>3.7)motor[FRONT].u = 3.7;
@@ -285,7 +287,11 @@ void drone_sim(void)
     print_state(t, &motor[FRONT], &motor[REAR], &drone);
   }
   cpu_time = clock() -cpu_time;
-  printf("#elapsed time %f\n", (double)cpu_time/CLOCKS_PER_SEC);
+  if(t>sampling)
+  {
+      printf("#elapsed time %f\n", (double)cpu_time/CLOCKS_PER_SEC);
+      sampling = sampling + 0.033;
+  }
 }
 
 int main(void)
