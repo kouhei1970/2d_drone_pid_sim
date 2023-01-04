@@ -28,7 +28,6 @@ const double Cq = 4.49713785e-10;//Cofficient of torque (Propeller)
 const double Dm = 1.02432352e-07;   //Cofficient of viscous damping [Nm s]
 const double Iy = 2.19e-5;
 const double armr=0.033;
-const double tau = 1/(92*2*M_PI);
 const double End_time =10.0;//Time [s]
 
 long cpu_time;
@@ -208,6 +207,8 @@ void drone_sim(void)
   double ti2=0.016;
   double td2=0.0055;
   double eta2=0.126;
+  double tau = 1/(92*2*M_PI);
+  
   q_pid.set_parameter(kp1, ti1, td1, eta1, ctrl_step);
   theta_pid.set_parameter(kp2, ti2, td2, eta2, ctrl_step);
   
