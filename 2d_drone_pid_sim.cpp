@@ -192,10 +192,10 @@ void drone_sim(void)
   PID q_pid,theta_pid;
 
   double t       = 0.0; //time
-  double step    =   0.0001;//step size
+  double step    =   0.00001;//step size
   double ctrl_step = 0.0025;
   double ctrl_time=0.0;
-  double theta_ref = 1.0;
+  double theta_ref = 1.0*M_PI/180;
   double sampling = 0.0;
   
   double u0;
@@ -207,12 +207,12 @@ void drone_sim(void)
 
   //PID Gain
   double kp1=0.8;
-  double ti1=2.5;
+  double ti1=0.7;
   double td1=0.03;
   double eta1 =0.125;
-  double kp2=2.0;
-  double ti2=0.016;
-  double td2=0.0055;
+  double kp2=5.5;
+  double ti2=1000;
+  double td2=0.04;
   double eta2=0.125;
   double tau = 1/(92*2*M_PI);
   
@@ -253,16 +253,16 @@ void drone_sim(void)
     //Control
     if(t>ctrl_time)
     {
-      err_theta = theta_ref*0.0 - drone.theta + (genrand_real1()-0.5);
+      err_theta = theta_ref - drone.theta+ 0.01*(genrand_real1()-0.5);
       q_ref = theta_pid.update(err_theta);
-      err_q = q_ref - sensor.y+(genrand_real1()-0.5);
+      err_q = q_ref - sensor.y+ 0.01*(genrand_real1()-0.5);
       elevator = q_pid.update(err_q);
       motor[FRONT].u =  0.25*elevator + u0;
-      //if (motor[FRONT].u>3.7)motor[FRONT].u = 3.7;
-      //if (motor[FRONT].u<0.0)motor[FRONT].u = 0.0;
+      if (motor[FRONT].u>3.7)motor[FRONT].u = 3.7;
+      if (motor[FRONT].u<0.0)motor[FRONT].u = 0.0;
       motor[REAR].u  = -0.25*elevator + u0;
-      //if (motor[REAR].u>3.7)motor[REAR].u = 3.7;
-      //if (motor[REAR].u<0.0)motor[REAR].u = 0.0;
+      if (motor[REAR].u>3.7)motor[REAR].u = 3.7;
+      if (motor[REAR].u<0.0)motor[REAR].u = 0.0;
       ctrl_time = ctrl_time + ctrl_step;
     }
 
@@ -287,14 +287,14 @@ void drone_sim(void)
     t = t + step;
     
     //Output
-    print_state(t, &motor[FRONT], &motor[REAR], &drone);
+    if(t>sampling)
+    {
+      print_state(t, &motor[FRONT], &motor[REAR], &drone);
+      sampling = sampling + 0.001;
+    }
   }
   cpu_time = clock() -cpu_time;
-  if(t>sampling)
-  {
-      printf("#elapsed time %f\n", (double)cpu_time/CLOCKS_PER_SEC);
-      sampling = sampling + 0.033;
-  }
+  printf("#elapsed time %f\n", (double)cpu_time/CLOCKS_PER_SEC);
 }
 
 int main(void)
